@@ -19,4 +19,6 @@ public interface ReferralDetailsRepository extends JpaRepository<ReferralDetails
 
   Optional<ReferralDetails> findByUserAndIsReferralTrue(Users user);
 
+  Optional<ReferralDetails> findByReferralCodeAndIsReferralTrue(String referralCode);
+
 }
