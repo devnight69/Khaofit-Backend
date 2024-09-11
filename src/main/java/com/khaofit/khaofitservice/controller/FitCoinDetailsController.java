@@ -3,6 +3,7 @@ package com.khaofit.khaofitservice.controller;
 import com.khaofit.khaofitservice.service.FitCoinService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,7 +25,7 @@ public class FitCoinDetailsController {
 
   @GetMapping("/user/details")
   public ResponseEntity<?> getFitCoinHistory(@Valid @RequestParam(name = "userId")
-                                             @NotBlank(message = "userId is required") Long userId) {
+                                             @NotNull(message = "userId is required") Long userId) {
     return fitCoinService.getFitCoinHistory(userId);
   }
 

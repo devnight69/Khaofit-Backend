@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -83,6 +84,22 @@ public class CustomExceptionHandler {
       String errorMessage = violation.getMessage();
       errors.put(fieldName, errorMessage);
     }
+    return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Validation Error.", errors);
+  }
+
+  /**
+   * Method to handle the validation issues.
+   *
+   * @param ex invalid argument.
+   * @return ResponseDto.
+   */
+  @ResponseStatus(HttpStatus.BAD_REQUEST)
+  @ExceptionHandler({MissingServletRequestParameterException.class})
+  public ResponseEntity<?> handleMissingRequestParamExceptions(MissingServletRequestParameterException ex) {
+    Map<String, String> errors = new HashMap<>();
+    String fieldName = "message";
+    String errorMessage = ex.getBody().getDetail();
+    errors.put(fieldName, errorMessage);
     return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Validation Error.", errors);
   }
 
