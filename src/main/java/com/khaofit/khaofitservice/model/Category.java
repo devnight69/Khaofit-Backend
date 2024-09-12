@@ -1,6 +1,6 @@
 package com.khaofit.khaofitservice.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,7 +44,7 @@ public class Category {
   private boolean active;
 
   @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
-  @JsonIgnore
+  @JsonBackReference
   private List<FoodItem> foodItemList;
 
   @Column(name = "created_at", nullable = false)

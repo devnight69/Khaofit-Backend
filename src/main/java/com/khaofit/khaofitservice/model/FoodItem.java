@@ -1,6 +1,6 @@
 package com.khaofit.khaofitservice.model;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -51,12 +51,12 @@ public class FoodItem {
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "restaurant_id")
-  @JsonIgnore
+  @JsonManagedReference
   private Restaurant restaurant;
 
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "category_id")
-  @JsonIgnore
+  @JsonManagedReference
   private Category category;
 
   @OneToMany(mappedBy = "foodItem", cascade = CascadeType.ALL, orphanRemoval = true)

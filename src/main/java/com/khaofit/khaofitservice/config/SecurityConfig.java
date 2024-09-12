@@ -63,6 +63,7 @@ public class SecurityConfig {
                 .requestMatchers("/fit/coin/**").fullyAuthenticated()
                 .requestMatchers("/category/**").fullyAuthenticated()
                 .requestMatchers("/restaurant/**").fullyAuthenticated()
+                .requestMatchers("/food-item/**").fullyAuthenticated()
                 .anyRequest().permitAll());
   }
 

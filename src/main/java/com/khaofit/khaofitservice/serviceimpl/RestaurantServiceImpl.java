@@ -1,7 +1,9 @@
 package com.khaofit.khaofitservice.serviceimpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.khaofit.khaofitservice.converter.RestaurantAndFoodItemConverter;
 import com.khaofit.khaofitservice.dto.request.RestaurantRequestDto;
+import com.khaofit.khaofitservice.dto.response.RestaurantResponseDto;
 import com.khaofit.khaofitservice.model.Restaurant;
 import com.khaofit.khaofitservice.repository.RestaurantRepository;
 import com.khaofit.khaofitservice.response.BaseResponse;
@@ -30,6 +32,9 @@ public class RestaurantServiceImpl implements RestaurantService {
 
   @Autowired
   private ObjectMapper objectMapper;
+
+  @Autowired
+  private RestaurantAndFoodItemConverter restaurantAndFoodItemConverter;
 
   private static final Logger logger = LoggerFactory.getLogger(RestaurantServiceImpl.class);
 
@@ -85,6 +90,36 @@ public class RestaurantServiceImpl implements RestaurantService {
       return baseResponse.successResponse("Restaurant deactivated successfully");
     } catch (Exception e) {
       logger.error("Error occurred while deactivating restaurant with ID {}: {}", restaurantId, e.getMessage());
+      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+          "An unexpected error occurred. Please try again.");
+    }
+  }
+
+  /**
+   * this is a get restaurant Details byId .
+   *
+   * @param restaurantId @{@link Long}
+   * @return @{@link ResponseEntity}
+   */
+  @Override
+  public ResponseEntity<?> getRestaurantDetailsById(Long restaurantId) {
+    logger.info("Fetching details for restaurant with ID: {}", restaurantId);
+
+    try {
+      Optional<Restaurant> optionalRestaurant = restaurantRepository.findById(restaurantId);
+
+      if (optionalRestaurant.isEmpty()) {
+        logger.warn("Restaurant with ID {} not found", restaurantId);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Restaurant Not Found");
+      }
+
+      RestaurantResponseDto restaurantResponseDto = restaurantAndFoodItemConverter.convertToRestaurantResponseDto(
+          optionalRestaurant.get());
+
+      logger.info("Successfully retrieved restaurant details for ID: {}", restaurantId);
+      return baseResponse.successResponse(restaurantResponseDto);
+    } catch (Exception e) {
+      logger.error("Error retrieving restaurant details for ID: {} - {}", restaurantId, e.getMessage());
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
           "An unexpected error occurred. Please try again.");
     }

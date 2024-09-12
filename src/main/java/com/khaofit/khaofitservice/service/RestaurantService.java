@@ -14,4 +14,6 @@ public interface RestaurantService {
 
   public ResponseEntity<?> deActiveRestaurant(Long restaurantId);
 
+  public ResponseEntity<?> getRestaurantDetailsById(Long restaurantId);
+
 }
