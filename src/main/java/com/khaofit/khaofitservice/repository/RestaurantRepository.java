@@ -2,7 +2,9 @@ package com.khaofit.khaofitservice.repository;
 
 import com.khaofit.khaofitservice.model.Restaurant;
 import jakarta.transaction.Transactional;
+import java.util.List;
 import java.util.Optional;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -26,5 +28,9 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
   @Transactional
   @Query("UPDATE Restaurant r SET r.active = false WHERE r.restaurantId = :restaurantId")
   int deactivateRestaurant(@Param("restaurantId") Long restaurantId);
+
+  @Query("SELECT r FROM Restaurant r WHERE LOWER(r.name) LIKE LOWER(CONCAT('%', :query, '%')) "
+      + "OR LOWER(r.location) LIKE LOWER(CONCAT('%', :query, '%'))")
+  List<Restaurant> searchByNameOrLocation(@Param("query") String query, Pageable pageable);
 
 }
