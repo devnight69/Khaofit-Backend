@@ -8,6 +8,7 @@ import com.khaofit.khaofitservice.model.Restaurant;
 import com.khaofit.khaofitservice.repository.RestaurantRepository;
 import com.khaofit.khaofitservice.response.BaseResponse;
 import com.khaofit.khaofitservice.service.RestaurantService;
+import jakarta.transaction.Transactional;
 import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,11 +103,12 @@ public class RestaurantServiceImpl implements RestaurantService {
    * @return @{@link ResponseEntity}
    */
   @Override
+  @Transactional
   public ResponseEntity<?> getRestaurantDetailsById(Long restaurantId) {
     logger.info("Fetching details for restaurant with ID: {}", restaurantId);
 
     try {
-      Optional<Restaurant> optionalRestaurant = restaurantRepository.findById(restaurantId);
+      Optional<Restaurant> optionalRestaurant = restaurantRepository.findByIdWithFoodItems(restaurantId);
 
       if (optionalRestaurant.isEmpty()) {
         logger.warn("Restaurant with ID {} not found", restaurantId);
@@ -119,7 +121,7 @@ public class RestaurantServiceImpl implements RestaurantService {
       logger.info("Successfully retrieved restaurant details for ID: {}", restaurantId);
       return baseResponse.successResponse(restaurantResponseDto);
     } catch (Exception e) {
-      logger.error("Error retrieving restaurant details for ID: {} - {}", restaurantId, e.getMessage());
+      logger.error("Error retrieving restaurant details for ID: {} - {}", restaurantId, e.getMessage(), e);
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
           "An unexpected error occurred. Please try again.");
     }

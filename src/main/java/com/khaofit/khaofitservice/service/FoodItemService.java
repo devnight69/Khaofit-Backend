@@ -14,4 +14,6 @@ public interface FoodItemService {
 
   public ResponseEntity<?> getFoodItemDetails(Long foodItemId);
 
+  public ResponseEntity<?> getFoodItemDetailsByRestaurantId(Long restaurantId);
+
 }

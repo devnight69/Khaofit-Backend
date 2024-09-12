@@ -41,6 +41,9 @@ public class Rating {
   @Column(name = "review", nullable = false)
   private String review;
 
+  @Column(name = "username", nullable = false)
+  private String username;
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "food_id")
   @JsonIgnore

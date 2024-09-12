@@ -75,7 +75,7 @@ public class RestaurantAndFoodItemConverter {
    * @return @{@link List}
    */
   private List<FoodItemRestaurantResponseDto> convertFoodItemsToFoodItemRestaurantResponseDtos(List<FoodItem> foodItems) {
-    return foodItems.parallelStream()
+    return foodItems.stream()
         .map(this::convertToFoodItemRestaurantResponseDto)
         .collect(Collectors.toList());
   }

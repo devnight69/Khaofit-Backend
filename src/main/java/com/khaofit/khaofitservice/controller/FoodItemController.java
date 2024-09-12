@@ -40,5 +40,12 @@ public class FoodItemController {
     return foodItemService.getFoodItemDetails(foodItemId);
   }
 
+  @GetMapping("/details/byRestaurantId")
+  public ResponseEntity<?> getFoodItemDetailsByRestaurantId(@Valid @RequestParam(name = "restaurantId")
+                                                            @NotNull(message = "restaurantId is required")
+                                                            Long restaurantId) {
+    return foodItemService.getFoodItemDetailsByRestaurantId(restaurantId);
+  }
+
 
 }

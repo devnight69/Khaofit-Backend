@@ -19,6 +19,9 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
   Optional<Restaurant> findByMobileNumber(String mobileNumber);
 
+  @Query("SELECT r FROM Restaurant r JOIN FETCH r.foodItemList WHERE r.restaurantId = :restaurantId")
+  Optional<Restaurant> findByIdWithFoodItems(@Param("restaurantId") Long restaurantId);
+
   @Modifying
   @Transactional
   @Query("UPDATE Restaurant r SET r.active = false WHERE r.restaurantId = :restaurantId")

@@ -161,5 +161,38 @@ public class FoodItemServiceImpl implements FoodItemService {
     }
   }
 
+  /**
+   * this is a method for fetch all food item based on restaurantId .
+   *
+   * @param restaurantId @{@link Long}
+   * @return @{@link ResponseEntity}
+   */
+  @Override
+  public ResponseEntity<?> getFoodItemDetailsByRestaurantId(Long restaurantId) {
+    try {
+      logger.info("Fetching food items for restaurantId: {}", restaurantId);
+
+      List<FoodItem> foodItems = foodItemRepository.findByRestaurant_RestaurantId(restaurantId);
+
+      if (foodItems.isEmpty()) {
+        logger.warn("No food items found for restaurantId: {}", restaurantId);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Food Item Not Found");
+      }
+
+      List<FoodItemResponseDto> foodItemResponseDtoList = foodItems.stream()
+          .map(foodItemToFoodItemResponseDtoConverter::convert)
+          .collect(Collectors.toList());
+
+      logger.info("Successfully fetched {} food items for restaurantId: {}", foodItemResponseDtoList.size(),
+          restaurantId);
+      return baseResponse.successResponse(foodItemResponseDtoList);
+
+    } catch (Exception e) {
+      logger.error("Error occurred while fetching food items for restaurantId: {}", restaurantId, e);
+      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+          "An unexpected error occurred. Please try again later.");
+    }
+  }
+
 
 }
