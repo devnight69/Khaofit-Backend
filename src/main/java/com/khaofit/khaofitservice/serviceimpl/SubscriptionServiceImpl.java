@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.khaofit.khaofitservice.dto.request.CreateSubscriptionPlansRequestDto;
 import com.khaofit.khaofitservice.dto.request.UserSubscriptionRequestDto;
 import com.khaofit.khaofitservice.model.FitCoinDetails;
-import com.khaofit.khaofitservice.model.ReferralDetails;
 import com.khaofit.khaofitservice.model.SubscriptionPlans;
 import com.khaofit.khaofitservice.model.UserSubscriptionDetails;
 import com.khaofit.khaofitservice.model.Users;
@@ -26,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 /**
  * this is a subscription service implementation class .
@@ -160,71 +160,145 @@ public class SubscriptionServiceImpl implements SubscriptionService {
       logger.info("Starting subscription process for user with ULID: {}", dto.getUserUlid());
 
       // Validate user existence
-      Optional<Users> optionalUsers = userRepository.findByUlId(dto.getUserUlid());
-      if (optionalUsers.isEmpty()) {
-        logger.warn("User with ULID: {} not found", dto.getUserUlid());
-        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "User not found!");
-      }
+      Users user = validateUser(dto.getUserUlid());
 
-      List<UserSubscriptionDetails> userSubscriptionDetailsList = userSubscriptionDetailsRepository
-          .findByUserAndActiveTrue(optionalUsers.get());
-
-      if (!userSubscriptionDetailsList.isEmpty()) {
-        logger.warn("User with ulid '{}' is already subscribed to an active plan", dto.getUserUlid());
+      // Check for existing active subscription
+      if (userSubscriptionDetailsRepository.existsByUserAndActiveTrue(user)) {
+        logger.warn("User with ULID '{}' is already subscribed to an active plan", dto.getUserUlid());
         return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "User is already subscribed to an active plan.");
       }
 
       // Validate subscription plan existence and active status
-      Optional<SubscriptionPlans> optionalSubscriptionPlans = subscriptionPlansRepository
-          .findByUlIdAndActiveTrue(dto.getPlanUlid());
-      if (optionalSubscriptionPlans.isEmpty()) {
-        logger.warn("Subscription plan with ULID: {} not found or inactive", dto.getPlanUlid());
-        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Subscription Plan Not Found!");
-      }
+      SubscriptionPlans subscriptionPlan = validateSubscriptionPlan(dto.getPlanUlid());
 
-      // Prepare user subscription details
-      UserSubscriptionDetails userSubscriptionDetails = new UserSubscriptionDetails();
-      userSubscriptionDetails.setUser(optionalUsers.get());
-      userSubscriptionDetails.setSubscriptionPlans(optionalSubscriptionPlans.get());
+      // Calculate subscription end time
+      LocalDate endDate = calculateEndDate(dto)
+          .orElseThrow(() -> new IllegalArgumentException("No valid duration specified for subscription."));
 
-      // Calculate subscription end time based on days, months, or years
-      LocalDate startDate = LocalDate.now();
-      if (dto.getDays() != null) {
-        userSubscriptionDetails.setSubscriptionEndTime(startDate.plusDays(dto.getDays()));
-      } else if (dto.getMonths() != null) {
-        userSubscriptionDetails.setSubscriptionEndTime(startDate.plusMonths(dto.getMonths()));
-      } else if (dto.getYears() != null) {
-        userSubscriptionDetails.setSubscriptionEndTime(startDate.plusYears(dto.getYears()));
-      } else {
-        logger.warn("No valid duration specified for subscription for user with ULID: {}", dto.getUserUlid());
-        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "No valid duration specified for subscription.");
-      }
+      // Create and save user subscription details
+      final UserSubscriptionDetails userSubscriptionDetails = createUserSubscriptionDetails(user, subscriptionPlan, endDate);
+      handleReferralAndFitCoinLogic(user, subscriptionPlan);
 
-      Optional<ReferralDetails> optionalReferralDetails = referralDetailsRepository.findByUserAndIsReferralTrue(
-          optionalUsers.get());
+      // Create and save FitCoin details
+      updateUserFitCoins(user, subscriptionPlan.getPrice());
 
-      if (optionalReferralDetails.isPresent()) {
-        Integer fitCoinPercentage = optionalReferralDetails.get().getUser().getFitCoinPercentage();
-        Double price = optionalSubscriptionPlans.get().getPrice();
-        Double value = (price * fitCoinPercentage) / 100;
-        FitCoinDetails fitCoinDetails = new FitCoinDetails();
-        fitCoinDetails.setUser(optionalUsers.get());
-        fitCoinDetails.setFitCoin(value);
-        FitCoinDetails dbFitCoinDetails = fitCoinRepository.save(fitCoinDetails);
-        logger.debug("Fit Coin Details Dto = {}", dbFitCoinDetails);
-      }
-
-      // Save user subscription details
-      UserSubscriptionDetails savedUserSubscriptionDetails = userSubscriptionDetailsRepository
-          .saveAndFlush(userSubscriptionDetails);
       logger.info("User subscription activated successfully for user with ULID: {}", dto.getUserUlid());
+      return baseResponse.successResponse("User Subscription Activated Successfully", userSubscriptionDetails);
 
-      return baseResponse.successResponse("User Subscription Activated Successfully", savedUserSubscriptionDetails);
+    } catch (IllegalArgumentException e) {
+      TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+      logger.error("Error occurred while subscribing user with ULID: {}", dto.getUserUlid(), e);
+      return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, e.getMessage());
     } catch (Exception e) {
+      TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
       logger.error("Error occurred while subscribing user with ULID: {}", dto.getUserUlid(), e);
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
           "An unexpected error occurred. Please try again later.");
     }
+  }
+
+  /**
+   * this is a method for check user is valid or not .
+   *
+   * @param userUlid @{@link String}
+   * @return @{@link Users}
+   */
+  private Users validateUser(String userUlid) {
+    return userRepository.findByUlId(userUlid).orElseThrow(() -> {
+      logger.warn("User with ULID: {} not found", userUlid);
+      return new IllegalArgumentException("User not found!");
+    });
+  }
+
+  /**
+   * this is a method for check subscription plan valid or not .
+   *
+   * @param planUlid @{@link String}
+   * @return @{@link SubscriptionPlans}
+   */
+  private SubscriptionPlans validateSubscriptionPlan(String planUlid) {
+    return subscriptionPlansRepository.findByUlIdAndActiveTrue(planUlid).orElseThrow(() -> {
+      logger.warn("Subscription plan with ULID: {} not found or inactive", planUlid);
+      return new IllegalArgumentException("Subscription Plan Not Found!");
+    });
+  }
+
+  /**
+   * this is a create user subscription details method .
+   *
+   * @param user             @{@link Users}
+   * @param subscriptionPlan @{@link SubscriptionPlans}
+   * @param endDate          @{@link LocalDate}
+   * @return @{@link UserSubscriptionDetails}
+   */
+  private UserSubscriptionDetails createUserSubscriptionDetails(Users user, SubscriptionPlans subscriptionPlan,
+                                                                LocalDate endDate) {
+    UserSubscriptionDetails userSubscriptionDetails = new UserSubscriptionDetails();
+    userSubscriptionDetails.setUser(user);
+    userSubscriptionDetails.setSubscriptionPlans(subscriptionPlan);
+    userSubscriptionDetails.setSubscriptionEndTime(endDate);
+    return userSubscriptionDetailsRepository.saveAndFlush(userSubscriptionDetails);
+  }
+
+  /**
+   * this is a method for update fit coin details .
+   *
+   * @param user @{@link Users}
+   * @param price @{@link Double}
+   */
+  private void updateUserFitCoins(Users user, Double price) {
+    FitCoinDetails fitCoinDetails = new FitCoinDetails();
+    fitCoinDetails.setUser(user);
+    fitCoinDetails.setFitCoin(price);
+    fitCoinRepository.save(fitCoinDetails);
+
+    user.setFitCoin(user.getFitCoin() + price);
+    userRepository.save(user);
+  }
+
+  /**
+   * this is a calculate end date method .
+   *
+   * @param dto @{@link UserSubscriptionRequestDto}
+   * @return @{@link Optional}
+   */
+  private Optional<LocalDate> calculateEndDate(UserSubscriptionRequestDto dto) {
+    LocalDate startDate = LocalDate.now();
+    if (dto.getDays() != null) {
+      return Optional.of(startDate.plusDays(dto.getDays()));
+    } else if (dto.getMonths() != null) {
+      return Optional.of(startDate.plusMonths(dto.getMonths()));
+    } else if (dto.getYears() != null) {
+      return Optional.of(startDate.plusYears(dto.getYears()));
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * this is a handle referral and fit coin logic method .
+   *
+   * @param user @{@link Users}
+   * @param subscriptionPlan @{@link SubscriptionPlans}
+   */
+  private void handleReferralAndFitCoinLogic(Users user, SubscriptionPlans subscriptionPlan) {
+    referralDetailsRepository.findByUserAndIsReferralTrue(user).ifPresent(referralDetails -> {
+      Optional<Users> referUsers = userRepository.findByReferralCode(referralDetails.getReferralCode());
+      if (referUsers.isPresent()) {
+        Integer fitCoinPercentage = referUsers.get().getFitCoinPercentage();
+        Double fitCoinValue = (subscriptionPlan.getPrice() * fitCoinPercentage) / 100;
+
+        // Create and save FitCoinDetails for referring user
+        FitCoinDetails fitCoinDetails = new FitCoinDetails();
+        fitCoinDetails.setUser(referUsers.get());
+        fitCoinDetails.setFitCoin(fitCoinValue);
+        fitCoinRepository.save(fitCoinDetails);
+
+        // Update referring user's fit coin balance
+        Users referringUser = referUsers.get();
+        referringUser.setFitCoin(referringUser.getFitCoin() + fitCoinValue);
+        userRepository.save(referringUser);
+      }
+    });
   }
 
   /**

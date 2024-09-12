@@ -24,6 +24,8 @@ public interface UserSubscriptionDetailsRepository extends JpaRepository<UserSub
 
   List<UserSubscriptionDetails> findByActiveTrue();
 
+  boolean existsByUserAndActiveTrue(Users users);
+
   @Transactional
   @Modifying
   @Query("UPDATE UserSubscriptionDetails u SET u.active = false WHERE u.subscriptionEndTime < :currentDate"

@@ -87,6 +87,9 @@ public class Users {
   @Column(name = "fit_coin_percentage", nullable = false)
   private Integer fitCoinPercentage;
 
+  @Column(name = "fit_coin", columnDefinition = "DOUBLE PRECISION DEFAULT 0", nullable = false)
+  private Double fitCoin;
+
   @Column(name = "created_at")
   private OffsetDateTime createdAt;
 
@@ -117,6 +120,7 @@ public class Users {
     this.setStatus(UserStatus.ACTIVE);
     this.setUserType(UserType.USER);
     this.setFitCoinPercentage(5);
+    this.setFitCoin(0.0);
   }
 
   @PreUpdate

@@ -61,6 +61,10 @@ public class SecurityConfig {
                 .requestMatchers("/user/**").fullyAuthenticated()
                 .requestMatchers("/subscription/**").fullyAuthenticated()
                 .requestMatchers("/fit/coin/**").fullyAuthenticated()
+                .requestMatchers("/category/**").fullyAuthenticated()
+                .requestMatchers("/restaurant/**").fullyAuthenticated()
+                .requestMatchers("/food-item/**").fullyAuthenticated()
+                .requestMatchers("/rating/**").fullyAuthenticated()
                 .anyRequest().permitAll());
   }
 

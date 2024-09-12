@@ -30,6 +30,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 /**
  * this is auth service implementation .
@@ -215,10 +216,18 @@ public class AuthServiceImpl implements AuthService {
       }
 
       Users newUser = createUserFromRequest(userProfileRequestDto);
-      userRepo.saveAndFlush(newUser);
+      newUser = userRepo.saveAndFlush(newUser);
 
-      ReferralDetails referralDetails = getReferralDetails(userProfileRequestDto, newUser);
-      referralDetailsRepository.saveAndFlush(referralDetails);
+      if (StringUtils.isNotNullAndNotEmpty(userProfileRequestDto.getReferredCode().trim())) {
+        Optional<Users> referUser = userRepo.findByReferralCode(userProfileRequestDto.getReferredCode().trim());
+        getReferralDetails(newUser, userProfileRequestDto.getReferredCode().trim(), true);
+        if (referUser.isPresent()) {
+          getReferralDetails(referUser.get(), newUser.getReferralCode(), false);
+        }
+      } else {
+        getReferralDetails(newUser, newUser.getReferralCode(), false);
+      }
+
 
       VerifyOtpResponseDto verifyOtpResponseDto = buildOtpResponse(userProfileRequestDto, newUser);
 
@@ -228,6 +237,7 @@ public class AuthServiceImpl implements AuthService {
       return baseResponse.successResponse(verifyOtpResponseDto);
 
     } catch (Exception e) {
+      TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
       logger.error("Error saving user profile for mobile number: {}, {}",
           maskMobileNumber(userProfileRequestDto.getMobileNumber()), e.getMessage());
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
@@ -274,22 +284,16 @@ public class AuthServiceImpl implements AuthService {
   /**
    * this is a referralDetails method .
    *
-   * @param userProfileRequestDto   @{@link UserProfileRequestDto}
    * @param dbUsers @{@link Users}
-   * @return @{@link ReferralDetails}
    */
-  private static @NotNull ReferralDetails getReferralDetails(UserProfileRequestDto userProfileRequestDto, Users dbUsers) {
+  private void getReferralDetails(Users dbUsers, String referCode, boolean isRefer) {
     ReferralDetails referralDetails = new ReferralDetails();
-    if (StringUtils.isNotNullAndNotEmpty(userProfileRequestDto.getReferredCode().trim())) {
-      referralDetails.setReferralCode(userProfileRequestDto.getReferredCode().trim());
-      referralDetails.setReferral(true);
-    } else {
-      referralDetails.setReferralCode(dbUsers.getReferralCode());
-      referralDetails.setReferral(false);
-    }
+    referralDetails.setReferral(isRefer);
     referralDetails.setUser(dbUsers);
+    referralDetails.setReferralCode(referCode);
+    referralDetails.setReferral(isRefer);
     referralDetails.setCoinsAwarded(0);
-    return referralDetails;
+    referralDetailsRepository.saveAndFlush(referralDetails);
   }
 
   /**
