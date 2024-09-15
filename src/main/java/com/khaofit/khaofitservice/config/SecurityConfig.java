@@ -65,6 +65,9 @@ public class SecurityConfig {
                 .requestMatchers("/restaurant/**").fullyAuthenticated()
                 .requestMatchers("/food-item/**").fullyAuthenticated()
                 .requestMatchers("/rating/**").fullyAuthenticated()
+                .requestMatchers("/v1/search/**").fullyAuthenticated()
+                .requestMatchers("/cart/**").fullyAuthenticated()
+                .requestMatchers("/order/**").fullyAuthenticated()
                 .anyRequest().permitAll());
   }
 

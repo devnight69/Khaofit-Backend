@@ -1,6 +1,8 @@
 package com.khaofit.khaofitservice.model;
 
+import com.khaofit.khaofitservice.converter.LongListConverter;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -11,6 +13,7 @@ import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -25,7 +28,7 @@ import lombok.Setter;
 @Entity
 @Table(name = "order_history", schema = "khaofit", indexes = {
     @Index(name = "idx_order_history_user_ulid", columnList = "user_ulid"),
-    @Index(name = "idx_order_history_cart_id", columnList = "cart_id")
+    @Index(name = "idx_order_history_food_item_id", columnList = "food_item_id")
 })
 public class OrderHistory {
 
@@ -34,8 +37,9 @@ public class OrderHistory {
   @Column(name = "order_history_id", nullable = false)
   private Long orderHistoryId;
 
-  @Column(name = "cart_id", nullable = false)
-  private Long cartId;
+  @Convert(converter = LongListConverter.class)
+  @Column(name = "food_item_id", nullable = false, columnDefinition = "TEXT")
+  private List<Long> foodItemId;
 
   @Column(name = "user_ulid", nullable = false)
   private String userUlid;

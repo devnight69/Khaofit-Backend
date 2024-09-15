@@ -1,5 +1,6 @@
 package com.khaofit.khaofitservice.repository;
 
+import com.khaofit.khaofitservice.enums.UserStatus;
 import com.khaofit.khaofitservice.model.Users;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,5 +21,7 @@ public interface UserRepository extends JpaRepository<Users, Long> {
   Optional<Users> findByReferralCode(String referralCode);
 
   boolean existsByMobileNumber(String mobileNumber);
+
+  boolean existsByUlIdAndStatus(String ulId, UserStatus status);
 
 }

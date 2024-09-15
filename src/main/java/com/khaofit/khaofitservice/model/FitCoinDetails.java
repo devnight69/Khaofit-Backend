@@ -45,7 +45,7 @@ public class FitCoinDetails {
   private Double fitCoin;
 
   @Column(name = "expire", nullable = false)
-  private boolean expire;
+  private boolean expire = false;
 
 
   @Column(name = "created_at", nullable = false)
@@ -58,7 +58,6 @@ public class FitCoinDetails {
   private void beforeInsert() {
     this.setCreatedAt(OffsetDateTime.now(ZoneOffset.of("+05:30")));
     this.setUpdatedAt(OffsetDateTime.now(ZoneOffset.of("+05:30")));
-    this.setExpire(false);
   }
 
   @PreUpdate
