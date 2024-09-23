@@ -19,7 +19,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 /**
  * Filter for checking the auth request token.
  *
- * @author Praveen
+ * @author Kousik Manik
  */
 @Component
 public class JwtTokenFilter extends OncePerRequestFilter {
