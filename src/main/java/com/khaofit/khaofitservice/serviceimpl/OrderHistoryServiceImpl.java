@@ -2,9 +2,11 @@ package com.khaofit.khaofitservice.serviceimpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.khaofit.khaofitservice.converter.FoodItemToFoodItemResponseDtoConverter;
+import com.khaofit.khaofitservice.dto.request.ChangeOrderStatusRequestDto;
 import com.khaofit.khaofitservice.dto.request.OrderHistoryRequestDto;
 import com.khaofit.khaofitservice.dto.response.FoodItemResponseDto;
 import com.khaofit.khaofitservice.dto.response.OrderHistoryResponseDto;
+import com.khaofit.khaofitservice.enums.OrderStatus;
 import com.khaofit.khaofitservice.model.FitCoinDetails;
 import com.khaofit.khaofitservice.model.FoodItem;
 import com.khaofit.khaofitservice.model.OrderHistory;
@@ -102,6 +104,7 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
       orderHistory.setQuantity(dto.getQuantity());
       orderHistory.setUserUlid(dto.getUserUlid());
       orderHistory.setFoodItemId(foodItemIds);
+      orderHistory.setOrderStatus(OrderStatus.BOOKED);
 
       orderHistoryRepository.saveAndFlush(orderHistory);
 
@@ -190,6 +193,49 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
       logger.error("Error occurred while retrieving order history for user ULID: {}", userUlid, e);
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
           "An error occurred while processing your request. Please try again later.");
+    }
+  }
+
+  /**
+   * this is a method for change order status .
+   *
+   * @param dto @{@link ChangeOrderStatusRequestDto}
+   * @return @{@link ResponseEntity}
+   */
+  @Override
+  @Transactional
+  public ResponseEntity<?> changeOrderStatus(ChangeOrderStatusRequestDto dto) {
+    try {
+      logger.info("Received request to change order status. Order ID: {}, New Status: {}",
+          dto.getOrderId(), dto.getStatus());
+
+      Optional<OrderHistory> optionalOrderHistory = orderHistoryRepository.findById(dto.getOrderId());
+
+      if (optionalOrderHistory.isEmpty()) {
+        logger.warn("Order not found for ID: {}", dto.getOrderId());
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Order not found");
+      }
+
+      OrderHistory orderHistory = optionalOrderHistory.get();
+      logger.info("Order found. Current Status: {}", orderHistory.getOrderStatus());
+
+      // Update the order status
+      orderHistory.setOrderStatus(dto.getStatus());
+      logger.info("Updating order status to: {}", dto.getStatus());
+
+      if (OrderStatus.DELIVERED.equals(dto.getStatus())) {
+        orderHistory.setActive(false);
+      }
+
+      orderHistory = orderHistoryRepository.saveAndFlush(orderHistory);
+      logger.info("Order status updated successfully for Order ID: {}", dto.getOrderId());
+
+      return baseResponse.successResponse(orderHistory);
+    } catch (Exception e) {
+      logger.error("Error occurred while changing order status for Order ID: {}. Error: {}",
+          dto.getOrderId(), e.getMessage(), e);
+      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+          "An error occurred while updating the order status.");
     }
   }
 

@@ -1,5 +1,6 @@
 package com.khaofit.khaofitservice.service;
 
+import com.khaofit.khaofitservice.dto.request.ChangeOrderStatusRequestDto;
 import com.khaofit.khaofitservice.dto.request.OrderHistoryRequestDto;
 import org.springframework.http.ResponseEntity;
 
@@ -13,5 +14,7 @@ public interface OrderHistoryService {
   public ResponseEntity<?> createOrder(OrderHistoryRequestDto dto);
 
   public ResponseEntity<?> getOrderHistory(String userUlid);
+
+  public ResponseEntity<?> changeOrderStatus(ChangeOrderStatusRequestDto dto);
 
 }

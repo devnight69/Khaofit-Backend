@@ -1,9 +1,12 @@
 package com.khaofit.khaofitservice.model;
 
 import com.khaofit.khaofitservice.converter.LongListConverter;
+import com.khaofit.khaofitservice.enums.OrderStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -46,6 +49,10 @@ public class OrderHistory {
 
   @Column(name = "quantity", nullable = false)
   private Integer quantity;
+
+  @Column(name = "order_status", nullable = false)
+  @Enumerated(EnumType.STRING)
+  private OrderStatus orderStatus;
 
   @Column(name = "price", nullable = false)
   private double price;

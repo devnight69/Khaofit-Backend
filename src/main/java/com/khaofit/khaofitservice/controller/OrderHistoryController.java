@@ -1,5 +1,6 @@
 package com.khaofit.khaofitservice.controller;
 
+import com.khaofit.khaofitservice.dto.request.ChangeOrderStatusRequestDto;
 import com.khaofit.khaofitservice.dto.request.OrderHistoryRequestDto;
 import com.khaofit.khaofitservice.service.OrderHistoryService;
 import jakarta.validation.Valid;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -42,6 +44,11 @@ public class OrderHistoryController {
                                            @Size(min = 26, max = 26, message =
                                                "User ULID must be exactly 26 characters long.") String userUlid) {
     return orderHistoryService.getOrderHistory(userUlid);
+  }
+
+  @PutMapping("/change/status")
+  public ResponseEntity<?> changeOrderStatus(@Valid @RequestBody ChangeOrderStatusRequestDto dto) {
+    return orderHistoryService.changeOrderStatus(dto);
   }
 
 }
