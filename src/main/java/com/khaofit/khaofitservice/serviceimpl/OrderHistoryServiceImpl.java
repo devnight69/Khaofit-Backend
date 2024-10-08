@@ -15,6 +15,7 @@ import com.khaofit.khaofitservice.repository.CartRepository;
 import com.khaofit.khaofitservice.repository.FitCoinRepository;
 import com.khaofit.khaofitservice.repository.FoodItemRepository;
 import com.khaofit.khaofitservice.repository.OrderHistoryRepository;
+import com.khaofit.khaofitservice.repository.ReferralDetailsRepository;
 import com.khaofit.khaofitservice.repository.UserRepository;
 import com.khaofit.khaofitservice.response.BaseResponse;
 import com.khaofit.khaofitservice.service.OrderHistoryService;
@@ -56,6 +57,9 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
 
   @Autowired
   private FitCoinRepository fitCoinRepository;
+
+  @Autowired
+  private ReferralDetailsRepository referralDetailsRepository;
 
   @Autowired
   private FoodItemToFoodItemResponseDtoConverter foodItemToFoodItemResponseDtoConverter;
@@ -129,8 +133,16 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
 
         fitCoinRepository.saveAndFlush(fitCoinDetails);
 
-        users.setFitCoin(fitCoin);
+        double fitCoinValue = (dto.getPrice() * users.getFitCoinPercentage()) / 100;
 
+        boolean isOrder = orderHistoryRepository.noOrdersExistByUserUlid(users.getUlId());
+
+        if (isOrder) {
+          users.setFitCoin(fitCoin + fitCoinValue);
+          handleReferralAndFitCoinLogic(users, dto.getPrice());
+        } else {
+          users.setFitCoin(fitCoin);
+        }
         userRepository.saveAndFlush(users);
       }
 
@@ -144,6 +156,27 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
           "An error occurred while placed an order. Please try again later.");
     }
+  }
+
+  private void handleReferralAndFitCoinLogic(Users user, double price) {
+    referralDetailsRepository.findByUserAndIsReferralTrue(user).ifPresent(referralDetails -> {
+      Optional<Users> referUsers = userRepository.findByReferralCode(referralDetails.getReferralCode());
+      if (referUsers.isPresent()) {
+        Integer fitCoinPercentage = referUsers.get().getFitCoinPercentage();
+        Double fitCoinValue = (price * fitCoinPercentage) / 100;
+
+        // Create and save FitCoinDetails for referring user
+        FitCoinDetails fitCoinDetails = new FitCoinDetails();
+        fitCoinDetails.setUser(referUsers.get());
+        fitCoinDetails.setFitCoin(fitCoinValue);
+        fitCoinRepository.save(fitCoinDetails);
+
+        // Update referring user's fit coin balance
+        Users referringUser = referUsers.get();
+        referringUser.setFitCoin(referringUser.getFitCoin() + fitCoinValue);
+        userRepository.save(referringUser);
+      }
+    });
   }
 
   /**
