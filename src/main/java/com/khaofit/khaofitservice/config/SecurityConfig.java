@@ -68,6 +68,7 @@ public class SecurityConfig {
                 .requestMatchers("/v1/search/**").fullyAuthenticated()
                 .requestMatchers("/cart/**").fullyAuthenticated()
                 .requestMatchers("/order/**").fullyAuthenticated()
+                .requestMatchers("/api/v1/address/**").fullyAuthenticated()
                 .anyRequest().permitAll());
   }
 
