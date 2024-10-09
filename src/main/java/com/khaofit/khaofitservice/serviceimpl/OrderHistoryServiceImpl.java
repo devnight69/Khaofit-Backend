@@ -19,6 +19,7 @@ import com.khaofit.khaofitservice.repository.ReferralDetailsRepository;
 import com.khaofit.khaofitservice.repository.UserRepository;
 import com.khaofit.khaofitservice.response.BaseResponse;
 import com.khaofit.khaofitservice.service.OrderHistoryService;
+import com.khaofit.khaofitservice.utilities.StringUtils;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -109,6 +110,9 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
       orderHistory.setUserUlid(dto.getUserUlid());
       orderHistory.setFoodItemId(foodItemIds);
       orderHistory.setOrderStatus(OrderStatus.BOOKED);
+      if (StringUtils.isNotNullAndNotEmpty(dto.getPaymentId())) {
+        orderHistory.setPaymentId(dto.getPaymentId());
+      }
 
       orderHistoryRepository.saveAndFlush(orderHistory);
 
@@ -285,6 +289,7 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
     OrderHistoryResponseDto orderHistoryResponseDto = new OrderHistoryResponseDto();
     orderHistoryResponseDto.setOrderHistoryId(orderHistory.getOrderHistoryId());
     orderHistoryResponseDto.setUserUlid(orderHistory.getUserUlid());
+    orderHistoryResponseDto.setPaymentId(orderHistory.getPaymentId());
     orderHistoryResponseDto.setQuantity(orderHistory.getQuantity());
     orderHistoryResponseDto.setPrice(orderHistory.getPrice());
     orderHistoryResponseDto.setActive(orderHistory.isActive());

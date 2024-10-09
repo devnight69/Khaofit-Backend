@@ -50,6 +50,9 @@ public class UserSubscriptionDetails {
   @Column(name = "active", nullable = false)
   private boolean active;
 
+  @Column(name = "payment_id", nullable = false)
+  private String paymentId;
+
   @Column(name = "subscription_end_time", nullable = false)
   private LocalDate subscriptionEndTime;
 

@@ -176,7 +176,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
           .orElseThrow(() -> new IllegalArgumentException("No valid duration specified for subscription."));
 
       // Create and save user subscription details
-      final UserSubscriptionDetails userSubscriptionDetails = createUserSubscriptionDetails(user, subscriptionPlan, endDate);
+      final UserSubscriptionDetails userSubscriptionDetails = createUserSubscriptionDetails(user, subscriptionPlan,
+          endDate, dto.getPaymentId());
       handleReferralAndFitCoinLogic(user, subscriptionPlan);
 
       // Create and save FitCoin details
@@ -232,8 +233,9 @@ public class SubscriptionServiceImpl implements SubscriptionService {
    * @return @{@link UserSubscriptionDetails}
    */
   private UserSubscriptionDetails createUserSubscriptionDetails(Users user, SubscriptionPlans subscriptionPlan,
-                                                                LocalDate endDate) {
+                                                                LocalDate endDate, String paymentId) {
     UserSubscriptionDetails userSubscriptionDetails = new UserSubscriptionDetails();
+    userSubscriptionDetails.setPaymentId(paymentId);
     userSubscriptionDetails.setUser(user);
     userSubscriptionDetails.setSubscriptionPlans(subscriptionPlan);
     userSubscriptionDetails.setSubscriptionEndTime(endDate);
@@ -338,6 +340,5 @@ public class SubscriptionServiceImpl implements SubscriptionService {
           "An error occurred while fetching subscription details.");
     }
   }
-
 
 }

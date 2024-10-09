@@ -17,6 +17,7 @@ public class OrderHistoryResponseDto {
   private List<FoodItemResponseDto> foodDetails;
   private String userUlid;
   private Integer quantity;
+  private String paymentId;
   private Double price;
   private Boolean active;
   private OffsetDateTime createdAt;

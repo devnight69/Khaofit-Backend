@@ -57,6 +57,7 @@ public class SecurityConfig {
             authorizationManagerRequestMatcherRegistry
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/health-check/**").permitAll()
+                .requestMatchers("/api/v1/rzp/callback/**").permitAll()
                 .requestMatchers("/bmi/**").fullyAuthenticated()
                 .requestMatchers("/user/**").fullyAuthenticated()
                 .requestMatchers("/subscription/**").fullyAuthenticated()
@@ -69,6 +70,7 @@ public class SecurityConfig {
                 .requestMatchers("/cart/**").fullyAuthenticated()
                 .requestMatchers("/order/**").fullyAuthenticated()
                 .requestMatchers("/api/v1/address/**").fullyAuthenticated()
+                .requestMatchers("/api/v1/payment/**").fullyAuthenticated()
                 .anyRequest().permitAll());
   }
 
