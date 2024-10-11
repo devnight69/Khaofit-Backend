@@ -17,4 +17,9 @@ public class KhaoFitConstantService {
 
   public static final String RZP_CALLBACK = "/payment/status";
 
+  // refund Realeted api
+
+  public static final String RZP_INSTANT_REFUND = "/payments/{pay_id}/refund";
+
+
 }

@@ -1,6 +1,7 @@
 package com.khaofit.khaofitservice.service;
 
 import com.khaofit.khaofitservice.dto.request.OrderData;
+import com.khaofit.khaofitservice.exceptions.KhaoFitException;
 import org.springframework.http.ResponseEntity;
 
 /**
@@ -17,5 +18,7 @@ public interface PaymentService {
   public ResponseEntity<?> createOrder(String mobileNumber, OrderData orderData);
 
   public void savePaymentStatus(Object response);
+
+  public ResponseEntity<?> refundPaymentForDoctor(String orderId) throws KhaoFitException;
 
 }

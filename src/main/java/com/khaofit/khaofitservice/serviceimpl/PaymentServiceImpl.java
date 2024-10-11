@@ -5,7 +5,11 @@ import com.google.gson.GsonBuilder;
 import com.khaofit.khaofitservice.cache.GuavaCacheServiceImpl;
 import com.khaofit.khaofitservice.constant.KhaoFitConstantService;
 import com.khaofit.khaofitservice.dto.request.OrderData;
+import com.khaofit.khaofitservice.dto.request.PaymentRefundRequestDto;
 import com.khaofit.khaofitservice.dto.response.OrderResponse;
+import com.khaofit.khaofitservice.dto.response.PaymentRefundResponseDto;
+import com.khaofit.khaofitservice.exceptions.KhaoFitException;
+import com.khaofit.khaofitservice.exceptions.RzpCustomErrorResponse;
 import com.khaofit.khaofitservice.model.PaymentDetails;
 import com.khaofit.khaofitservice.repository.PaymentDetailsRepository;
 import com.khaofit.khaofitservice.response.BaseResponse;
@@ -13,7 +17,10 @@ import com.khaofit.khaofitservice.service.PaymentService;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -54,6 +61,9 @@ public class PaymentServiceImpl implements PaymentService {
 
   @Autowired
   private PaymentDetailsRepository paymentDetailsRepository;
+
+  @Autowired
+  private RzpCustomErrorResponse rzpCustomErrorResponse;
 
   @Autowired
   private RestTemplate restTemplate;
@@ -133,7 +143,6 @@ public class PaymentServiceImpl implements PaymentService {
     }
 
   }
-
 
   /**
    * Saves the payment status received from the payment gateway callback.
@@ -223,5 +232,78 @@ public class PaymentServiceImpl implements PaymentService {
       logger.error("An error occurred while processing the payment status", e);
     }
   }
+
+
+  /**
+   * Payment refund method for razarpay for doctor service .
+   *
+   * @param orderId @{@link String}
+   * @return @{@link ResponseEntity}
+   * @throws KhaoFitException @{@link KhaoFitException}
+   */
+  @Override
+  public ResponseEntity<?> refundPaymentForDoctor(String orderId)
+      throws KhaoFitException {
+    // Encode the key ID and secret for Basic Authentication
+    byte[] keyByte = (keyId + ":" + secret).getBytes(StandardCharsets.UTF_8);
+    String rzpKey = Base64.getEncoder().encodeToString(keyByte);
+    AtomicReference<Object> resp = new AtomicReference<>();
+    try {
+      Optional<PaymentDetails> paymentDetails = paymentDetailsRepository.findByOrderId(orderId);
+      paymentDetails.ifPresent(payment -> {
+        JSONObject jsonResponse = new JSONObject(payment.getOrderResponse());
+        String receipt = jsonResponse.getString("receipt");
+        PaymentRefundRequestDto dto = new PaymentRefundRequestDto();
+        dto.setAmount((long) payment.getAmount());
+        dto.setReceipt(receipt);
+        dto.setNotes(Map.of("notes_key_1", "Doctor Appointment booking cancelled"));
+
+        resp.set(refundPaymentRzp(rzpKey, payment.getPaymentId(), dto));
+
+      });
+
+      return baseResponse.successResponse(resp);
+
+    } catch (HttpStatusCodeException e) {
+      // Log specific HTTP status code exceptions
+      logger.warn("HTTP error (status code: {}) while refunding payment details from Razorpay API for order ID: {}."
+              + " Error message: {}",
+          e.getStatusCode(), orderId, e.getMessage());
+      return rzpCustomErrorResponse.setErrorResponse(e);
+    } catch (Exception e) {
+      // Log general exceptions
+      logger.error("Unexpected error while refunding payment details from Razorpay API for orderId ID: {}."
+              + " Error message: {}",
+          orderId, e.getMessage(), e);
+      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+    }
+  }
+
+  private Object refundPaymentRzp(String rzpKey, String paymentId, PaymentRefundRequestDto dto) {
+    // Prepare the HTTP headers
+    HttpHeaders headers = new HttpHeaders();
+    headers.setAccept(List.of(MediaType.APPLICATION_JSON));
+    headers.add("Authorization", "Basic " + rzpKey);
+
+    // Construct the request URL
+    String url = baseUrl + "/" + apiVersion + KhaoFitConstantService.RZP_INSTANT_REFUND
+        .replace("{pay_id}", paymentId);
+
+    // Log the initiation of the request
+    logger.info("Initiating refund payment request to Razorpay API for payment ID: {}. Url: {}", paymentId, url);
+
+    // Create the HTTP entity with headers
+    HttpEntity<?> entity = new HttpEntity<>(dto, headers);
+
+    // Make the POST request to the Razorpay API
+    var resp = restTemplate.exchange(url, HttpMethod.POST, entity, PaymentRefundResponseDto.class).getBody();
+
+    // Log the successful response
+    logger.info("Successfully refunded payment details from Razorpay API for payment ID: {}. Response: {}",
+        paymentId, resp);
+
+    return resp;
+  }
+
 
 }
