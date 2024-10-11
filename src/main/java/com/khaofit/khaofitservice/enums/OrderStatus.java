@@ -10,6 +10,7 @@ public enum OrderStatus {
   BOOKED("booked"),
   PREPARING("preparing"),
   ONTHEWAY("onTheWay"),
+  CANCEL("cancel"),
   DELIVERED("delivered");
 
   private final String value;

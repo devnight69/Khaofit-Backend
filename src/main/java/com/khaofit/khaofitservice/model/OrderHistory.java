@@ -57,6 +57,9 @@ public class OrderHistory {
   @Column(name = "price", nullable = false)
   private double price;
 
+  @Column(name = "payment_id")
+  private String paymentId;
+
   @Column(name = "active", nullable = false)
   private boolean active;
 

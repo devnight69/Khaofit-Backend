@@ -1,0 +1,28 @@
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Razorpay Payment Form</title>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+<div id="rzp-button-container"></div>
+<script th:inline="javascript">
+    /*<![CDATA[*/
+    var options = /*[[${options}]]*/ {};
+    console.log(options); // Log the options object to the console for debugging
+
+    <!--    document.getElementById('rzp-button-container').innerHTML = '<button class="btn btn-primary" id="rzp-button">Pay with Razorpay</button>';-->
+    <!--    document.getElementById('rzp-button').onclick = function() {-->
+    <!--        -->
+    <!--    };-->
+
+    var rzp1 = new Razorpay(options);
+    rzp1.open();
+    e.preventDefault();
+
+    /*]]>*/
+</script>
+</body>
+</html>

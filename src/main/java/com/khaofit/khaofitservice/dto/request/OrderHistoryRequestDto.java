@@ -34,4 +34,6 @@ public class OrderHistoryRequestDto {
   @Positive(message = "Price must be a positive value")
   private Double price;
 
+  private String paymentId;
+
 }

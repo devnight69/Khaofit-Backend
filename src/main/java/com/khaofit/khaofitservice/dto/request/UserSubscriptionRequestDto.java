@@ -23,6 +23,11 @@ public class UserSubscriptionRequestDto {
   @NotEmpty(message = "planUlid cannot be empty")
   private String planUlid;
 
+  @NotNull(message = "paymentId cannot be null")
+  @NotBlank(message = "paymentId cannot be blank")
+  @NotEmpty(message = "paymentId cannot be empty")
+  private String paymentId;
+
   private Integer days;
   private Integer months;
   private Integer years;

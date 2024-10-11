@@ -7,6 +7,7 @@ import com.khaofit.khaofitservice.dto.request.OrderHistoryRequestDto;
 import com.khaofit.khaofitservice.dto.response.FoodItemResponseDto;
 import com.khaofit.khaofitservice.dto.response.OrderHistoryResponseDto;
 import com.khaofit.khaofitservice.enums.OrderStatus;
+import com.khaofit.khaofitservice.exceptions.KhaoFitException;
 import com.khaofit.khaofitservice.model.FitCoinDetails;
 import com.khaofit.khaofitservice.model.FoodItem;
 import com.khaofit.khaofitservice.model.OrderHistory;
@@ -19,6 +20,8 @@ import com.khaofit.khaofitservice.repository.ReferralDetailsRepository;
 import com.khaofit.khaofitservice.repository.UserRepository;
 import com.khaofit.khaofitservice.response.BaseResponse;
 import com.khaofit.khaofitservice.service.OrderHistoryService;
+import com.khaofit.khaofitservice.service.PaymentService;
+import com.khaofit.khaofitservice.utilities.StringUtils;
 import jakarta.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +37,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.interceptor.TransactionAspectSupport;
 
 /**
  * this is a service implementation class for OrderHistoryService .
@@ -48,6 +52,9 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
 
   @Autowired
   private ObjectMapper objectMapper;
+
+  @Autowired
+  private PaymentService paymentService;
 
   @Autowired
   private OrderHistoryRepository orderHistoryRepository;
@@ -109,6 +116,9 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
       orderHistory.setUserUlid(dto.getUserUlid());
       orderHistory.setFoodItemId(foodItemIds);
       orderHistory.setOrderStatus(OrderStatus.BOOKED);
+      if (StringUtils.isNotNullAndNotEmpty(dto.getPaymentId())) {
+        orderHistory.setPaymentId(dto.getPaymentId());
+      }
 
       orderHistoryRepository.saveAndFlush(orderHistory);
 
@@ -273,6 +283,64 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
   }
 
   /**
+   * this is a cancel order method .
+   *
+   * @param orderId @{@link Long}
+   * @return @{@link ResponseEntity}
+   */
+  @Override
+  @Transactional
+  public ResponseEntity<?> cancelOrder(Long orderId) {
+    logger.info("Request received to cancel order with ID: {}", orderId);
+    try {
+      // Fetch the order details by ID
+      Optional<OrderHistory> optionalOrderHistory = orderHistoryRepository.findById(orderId);
+
+      // Check if the order exists
+      if (optionalOrderHistory.isEmpty()) {
+        String errorMessage = String.format("Order with ID %d not found", orderId);
+        logger.warn(errorMessage);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, errorMessage);
+      }
+
+      // Update order status to 'CANCEL'
+      OrderHistory orderHistory = optionalOrderHistory.get();
+      orderHistory.setOrderStatus(OrderStatus.CANCEL);
+      orderHistoryRepository.saveAndFlush(orderHistory);
+
+      String successMessage = String.format("Order with ID %d cancelled successfully", orderId);
+      logger.info(successMessage);
+
+      // Attempt to refund payment if a payment ID exists
+      if (StringUtils.isNotNullAndNotEmpty(orderHistory.getPaymentId())) {
+        try {
+          // Call refund service for payment
+          paymentService.refundPaymentForDoctor(orderHistory.getPaymentId());
+          logger.info("Refund successful for Payment ID: {}", orderHistory.getPaymentId());
+        } catch (KhaoFitException e) {
+          // Log and rethrow the exception to trigger rollback
+          String refundErrorMessage = String.format("Refund failed for Payment ID: %s. Rolling back the transaction.",
+              orderHistory.getPaymentId());
+          logger.error(refundErrorMessage, e);
+          throw new RuntimeException("Refund failed: " + e.getMessage(), e);  // Rethrow to trigger rollback
+        }
+      }
+
+      // Return success response after successful cancellation and refund
+      return baseResponse.successResponse(successMessage, orderHistory);
+
+    } catch (Exception e) {
+      // Handle any other exceptions, log and return error response
+      String errorMessage = String.format("Failed to cancel order with ID %d due to an internal error", orderId);
+      logger.error(errorMessage, e);
+      TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+          "An error occurred while cancelling the order. Please try again later.");
+    }
+  }
+
+
+  /**
    * this is a method for create response dto .
    *
    * @param orderHistory @{@link OrderHistory}
@@ -285,6 +353,7 @@ public class OrderHistoryServiceImpl implements OrderHistoryService {
     OrderHistoryResponseDto orderHistoryResponseDto = new OrderHistoryResponseDto();
     orderHistoryResponseDto.setOrderHistoryId(orderHistory.getOrderHistoryId());
     orderHistoryResponseDto.setUserUlid(orderHistory.getUserUlid());
+    orderHistoryResponseDto.setPaymentId(orderHistory.getPaymentId());
     orderHistoryResponseDto.setQuantity(orderHistory.getQuantity());
     orderHistoryResponseDto.setPrice(orderHistory.getPrice());
     orderHistoryResponseDto.setActive(orderHistory.isActive());

@@ -17,4 +17,6 @@ public interface OrderHistoryService {
 
   public ResponseEntity<?> changeOrderStatus(ChangeOrderStatusRequestDto dto);
 
+  public ResponseEntity<?> cancelOrder(Long orderId);
+
 }
