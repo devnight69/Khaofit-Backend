@@ -76,9 +76,7 @@ public class JwtAuthUtils {
     Map<String, Object> payload = new HashMap<>();
     payload.put("userStatus", jwtPayloadDto.getUserStatus());
     payload.put("mobileNumber", jwtPayloadDto.getMobileNumber());
-    payload.put("firstName", jwtPayloadDto.getFirstName());
-    payload.put("middleName", jwtPayloadDto.getMiddleName());
-    payload.put("lastName", jwtPayloadDto.getLastName());
+    payload.put("fullName", jwtPayloadDto.getFullName());
     payload.put("userId", jwtPayloadDto.getUserId());
 
     String authorities = authentication.getAuthorities().stream()
@@ -123,13 +121,11 @@ public class JwtAuthUtils {
    */
   public JwtPayloadDto decodeToken(String authToken) {
     Claims claims = Jwts.parser().verifyWith((SecretKey) encodedSecret).build()
-            .parseSignedClaims(authToken).getPayload();
+        .parseSignedClaims(authToken).getPayload();
     JwtPayloadDto dto = new JwtPayloadDto();
     dto.setUserStatus((String) claims.get("userStatus"));
     dto.setMobileNumber((String) claims.get("mobileNumber"));
-    dto.setFirstName((String) claims.get("firstName"));
-    dto.setMiddleName((String) claims.get("middleName"));
-    dto.setLastName((String) claims.get("lastName"));
+    dto.setFullName((String) claims.get("fullName"));
     dto.setUserId((String) claims.get("userId"));
     return dto;
   }

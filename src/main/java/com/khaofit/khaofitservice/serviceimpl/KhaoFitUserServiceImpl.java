@@ -82,9 +82,7 @@ public class KhaoFitUserServiceImpl implements KhaoFitUserService {
       }
 
       Users users = optionalUsers.get();
-      users.setFirstName(dto.getFirstName());
-      users.setMiddleName(dto.getMiddleName());
-      users.setLastName(dto.getLastName());
+      users.setFullName(dto.getFullName());
       users.setDateOfBirth(dto.getDateOfBirth());
       users.setEmailId(dto.getEmailId());
       users.setGender(dto.getGender());

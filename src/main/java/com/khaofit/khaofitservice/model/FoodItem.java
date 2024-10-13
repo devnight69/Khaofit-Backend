@@ -1,9 +1,12 @@
 package com.khaofit.khaofitservice.model;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
+import com.khaofit.khaofitservice.enums.FoodType;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -44,6 +47,11 @@ public class FoodItem {
   private String name;
   @Column(name = "description", nullable = false, columnDefinition = "TEXT")
   private String description;
+
+  @Column(name = "food_type", nullable = false)
+  @Enumerated(EnumType.STRING)
+  private FoodType foodType;
+
   @Column(name = "price", nullable = false)
   private Double price;
   @Column(name = "is_available", nullable = false)

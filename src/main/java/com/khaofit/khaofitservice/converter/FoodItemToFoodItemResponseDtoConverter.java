@@ -33,6 +33,7 @@ public class FoodItemToFoodItemResponseDtoConverter implements Converter<FoodIte
         source.getFoodId(),
         source.getName(),
         source.getDescription(),
+        source.getFoodType(),
         source.getPrice(),
         source.isActive(),
         source.getCreatedAt(),

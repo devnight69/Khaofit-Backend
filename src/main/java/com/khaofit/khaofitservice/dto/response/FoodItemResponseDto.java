@@ -1,5 +1,6 @@
 package com.khaofit.khaofitservice.dto.response;
 
+import com.khaofit.khaofitservice.enums.FoodType;
 import java.time.OffsetDateTime;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -21,6 +22,8 @@ public class FoodItemResponseDto {
   private String name;
 
   private String description;
+
+  private FoodType foodType;
 
   private Double price;
 
@@ -44,6 +47,7 @@ public class FoodItemResponseDto {
   public FoodItemResponseDto(Long foodId,
                              String name,
                              String description,
+                             FoodType foodType,
                              Double price,
                              boolean active,
                              OffsetDateTime createdAt,
@@ -55,6 +59,7 @@ public class FoodItemResponseDto {
     this.foodId = foodId;
     this.name = name;
     this.description = description;
+    this.foodType = foodType;
     this.price = price;
     this.active = active;
     this.createdAt = createdAt;
