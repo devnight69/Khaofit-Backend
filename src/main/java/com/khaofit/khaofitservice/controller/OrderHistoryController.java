@@ -51,4 +51,10 @@ public class OrderHistoryController {
     return orderHistoryService.changeOrderStatus(dto);
   }
 
+  @PutMapping("/cancel")
+  public ResponseEntity<?> cancelOrder(@Valid @RequestParam("orderId")
+                                       @NotNull(message = "orderId cannot be null") Long orderId) {
+    return orderHistoryService.cancelOrder(orderId);
+  }
+
 }

@@ -11,11 +11,7 @@ import lombok.Data;
 @Data
 public class EditUserProfileRequestDto {
 
-  private String firstName;
-
-  private String middleName;
-
-  private String lastName;
+  private String fullName;
 
   private String dateOfBirth;
 

@@ -9,9 +9,7 @@ import lombok.Setter;
 @Setter
 @Getter
 public class JwtPayloadDto {
-  private String firstName;
-  private String middleName;
-  private String lastName;
+  private String fullName;
   private String mobileNumber;
   private String userId;
   private String userStatus;

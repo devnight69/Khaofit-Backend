@@ -80,9 +80,7 @@ public class AuthServiceImpl implements AuthService {
   private JwtPayloadDto makeJwtPayLoadDto(Users users) {
     JwtPayloadDto jwtPayloadDto = new JwtPayloadDto();
     jwtPayloadDto.setMobileNumber(users.getMobileNumber());
-    jwtPayloadDto.setFirstName(users.getFirstName());
-    jwtPayloadDto.setMiddleName(users.getMiddleName());
-    jwtPayloadDto.setLastName(users.getLastName());
+    jwtPayloadDto.setFullName(users.getFullName());
     jwtPayloadDto.setUserStatus(users.getStatus().name());
     jwtPayloadDto.setUserId(users.getUlId());
     return jwtPayloadDto;

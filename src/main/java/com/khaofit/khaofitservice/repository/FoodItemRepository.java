@@ -1,5 +1,6 @@
 package com.khaofit.khaofitservice.repository;
 
+import com.khaofit.khaofitservice.enums.FoodType;
 import com.khaofit.khaofitservice.model.Category;
 import com.khaofit.khaofitservice.model.FoodItem;
 import com.khaofit.khaofitservice.model.Restaurant;
@@ -27,6 +28,10 @@ public interface FoodItemRepository extends JpaRepository<FoodItem, Long> {
   Optional<FoodItem> findByIdWithDetails(@Param("foodItemId") Long foodItemId);
 
   List<FoodItem> findByRestaurant_RestaurantId(Long restaurantId);
+
+  List<FoodItem> findByCategoryCategoryId(Long categoryId);
+
+  List<FoodItem> findByFoodType(FoodType foodType);
 
   @Query("SELECT f FROM FoodItem f WHERE LOWER(f.name) LIKE LOWER(CONCAT('%', :query, '%'))")
   List<FoodItem> searchByName(@Param("query") String query, Pageable pageable);

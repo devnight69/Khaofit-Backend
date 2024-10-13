@@ -1,9 +1,11 @@
 package com.khaofit.khaofitservice.serviceimpl;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.khaofit.khaofitservice.converter.FoodItemRegisterDtoToFoodItemConverter;
 import com.khaofit.khaofitservice.converter.FoodItemToFoodItemResponseDtoConverter;
 import com.khaofit.khaofitservice.dto.request.FoodItemRegisterDto;
 import com.khaofit.khaofitservice.dto.response.FoodItemResponseDto;
+import com.khaofit.khaofitservice.enums.FoodType;
 import com.khaofit.khaofitservice.model.Category;
 import com.khaofit.khaofitservice.model.FoodImage;
 import com.khaofit.khaofitservice.model.FoodItem;
@@ -52,6 +54,9 @@ public class FoodItemServiceImpl implements FoodItemService {
   private ObjectMapper objectMapper;
 
   @Autowired
+  private FoodItemRegisterDtoToFoodItemConverter foodItemRegisterDtoToFoodItemConverter;
+
+  @Autowired
   private FoodItemToFoodItemResponseDtoConverter foodItemToFoodItemResponseDtoConverter;
 
   private static final Logger logger = LoggerFactory.getLogger(FoodItemServiceImpl.class);
@@ -96,7 +101,7 @@ public class FoodItemServiceImpl implements FoodItemService {
       }
 
       // Convert DTO to FoodItem Entity
-      FoodItem foodItem = objectMapper.convertValue(dto, FoodItem.class);
+      FoodItem foodItem = foodItemRegisterDtoToFoodItemConverter.convert(dto);
       foodItem.setRestaurant(optionalRestaurant.get());
       foodItem.setCategory(optionalCategory.get());
 
@@ -189,6 +194,72 @@ public class FoodItemServiceImpl implements FoodItemService {
 
     } catch (Exception e) {
       logger.error("Error occurred while fetching food items for restaurantId: {}", restaurantId, e);
+      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+          "An unexpected error occurred. Please try again later.");
+    }
+  }
+
+  /**
+   * this is a method for getting all food item using category .
+   *
+   * @param categoryId @{@link Long}
+   * @return @{@link ResponseEntity}
+   */
+  @Override
+  public ResponseEntity<?> getFoodItemDetailsByCategory(Long categoryId) {
+    try {
+      logger.info("Fetching food items for categoryId: {}", categoryId);
+
+      List<FoodItem> foodItems = foodItemRepository.findByCategoryCategoryId(categoryId);
+
+      if (foodItems.isEmpty()) {
+        logger.warn("No food items found for categoryId: {}", categoryId);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Food Item Not Found");
+      }
+
+      List<FoodItemResponseDto> foodItemResponseDtoList = foodItems.stream()
+          .map(foodItemToFoodItemResponseDtoConverter::convert)
+          .collect(Collectors.toList());
+
+      logger.info("Successfully fetched {} food items for categoryId: {}", foodItemResponseDtoList.size(),
+          categoryId);
+      return baseResponse.successResponse(foodItemResponseDtoList);
+
+    } catch (Exception e) {
+      logger.error("Error occurred while fetching food items for categoryId: {}", categoryId, e);
+      return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
+          "An unexpected error occurred. Please try again later.");
+    }
+  }
+
+  /**
+   * this is a get food item list method using food type .
+   *
+   * @param foodType @{@link FoodType}
+   * @return @{@link ResponseEntity}
+   */
+  @Override
+  public ResponseEntity<?> getFoodItemDetailsByFoodType(FoodType foodType) {
+    try {
+      logger.info("Fetching food items for foodType: {}", foodType);
+
+      List<FoodItem> foodItems = foodItemRepository.findByFoodType(foodType);
+
+      if (foodItems.isEmpty()) {
+        logger.warn("No food items found for foodType: {}", foodType);
+        return baseResponse.errorResponse(HttpStatus.BAD_REQUEST, "Food Item Not Found");
+      }
+
+      List<FoodItemResponseDto> foodItemResponseDtoList = foodItems.stream()
+          .map(foodItemToFoodItemResponseDtoConverter::convert)
+          .collect(Collectors.toList());
+
+      logger.info("Successfully fetched {} food items for foodType: {}", foodItemResponseDtoList.size(),
+          foodType);
+      return baseResponse.successResponse(foodItemResponseDtoList);
+
+    } catch (Exception e) {
+      logger.error("Error occurred while fetching food items for foodType: {}", foodType, e);
       return baseResponse.errorResponse(HttpStatus.INTERNAL_SERVER_ERROR,
           "An unexpected error occurred. Please try again later.");
     }

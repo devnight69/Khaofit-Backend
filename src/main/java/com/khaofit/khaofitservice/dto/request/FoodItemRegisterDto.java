@@ -1,5 +1,6 @@
 package com.khaofit.khaofitservice.dto.request;
 
+import com.khaofit.khaofitservice.enums.FoodType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -28,6 +29,9 @@ public class FoodItemRegisterDto {
   @NotNull(message = "Price must not be null")
   @Positive(message = "Price must be a positive number")
   private Double price; // Price of the food item
+
+  @NotNull(message = "foodType cannot be null")
+  private FoodType foodType;
 
   @Valid
   @NotNull(message = "Food image details must not be null")
